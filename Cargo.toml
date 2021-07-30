@@ -10,21 +10,23 @@ authors = [
 crate-type = ["lib"]
 
 [dependencies]
-serde_derive = "1.0"
-serde = "1.0"
-rayon = "1.0.3"
-curv = { package = "curv-kzen", version = "0.7", default-features = false }
+serde_derive = { version = "1.0", git = "https://github.com/mesalock-linux/serde-sgx" }
+serde = { version = "1.0", git = "https://github.com/mesalock-linux/serde-sgx", features = ["derive"] }
+#rayon = "1.0.3"
+curv = { git = "https://github.com/sgx-test/curv-sgx", version = "0.7", features = ["num-bigint"] }
+sgx_tstd = { rev = "v1.1.3", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
 [dependencies.bulletproof]
-git = "https://github.com/KZen-networks/bulletproofs"
-tag = "v1.1.6"
-default-features = false
+git = "https://github.com/sgx-test/bulletproofs-sgx"
+branch = "1.1.6-sgx"
+#default-features = false
 
-[dev-dependencies]
-criterion = "0.2"
+#[dev-dependencies]
+#criterion = "0.2"
 
 [features]
-default = ["curv/rust-gmp-kzen"]
+default = ["curv/num-bigint","mesalock_sgx"]
+mesalock_sgx = ["sgx_tstd"]
 
 [[bench]]
 name = "v_backup"

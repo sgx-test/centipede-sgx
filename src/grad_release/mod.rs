@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+use std::prelude::v1::*;
 
 use bulletproof::proofs::range_proof::RangeProof;
 use curv::cryptographic_primitives::proofs::sigma_correct_homomorphic_elgamal_enc::HomoELGamalProof;

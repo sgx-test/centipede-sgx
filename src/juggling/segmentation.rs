@@ -14,6 +14,7 @@ version 3 of the License, or (at your option) any later version.
 
 @license GPL-3.0+ <https://github.com/KZen-networks/centipede/blob/master/LICENSE>
 */
+use std::prelude::v1::*;
 
 const SECRETBITS: usize = 256;
 
@@ -24,7 +25,7 @@ use curv::elliptic::curves::secp256_k1::{FE, GE};
 use curv::elliptic::curves::traits::*;
 use curv::BigInt;
 use juggling::proof_system::{Helgamal, Helgamalsegmented, Witness};
-use rayon::prelude::*;
+//use rayon::prelude::*;
 
 use Errors::{self, ErrorDecrypting};
 
@@ -123,7 +124,7 @@ impl Msegmentation {
             .map(|_| ECScalar::new_random())
             .collect::<Vec<FE>>();
         let segmented_enc = (0..num_of_segments)
-            .into_par_iter()
+            .into_iter()
             .map(|i| {
                 //  let segment_i = mSegmentation::get_segment_k(secret,segment_size,i as u8);
                 Msegmentation::encrypt_segment_k(
@@ -189,14 +190,14 @@ impl Msegmentation {
     ) -> Result<FE, Errors> {
         let limit = 2u32.pow(segment_size.clone() as u32);
         let test_ge_table = (1..limit)
-            .into_par_iter()
+            .into_iter()
             .map(|i| {
                 let test_fe = ECScalar::from(&BigInt::from(i));
                 G * &test_fe
             })
             .collect::<Vec<GE>>();
         let vec_secret = (0..DE_vec.DE.len())
-            .into_par_iter()
+            .into_iter()
             .map(|i| {
                 let result = Msegmentation::decrypt_segment(
                     &DE_vec.DE[i],
