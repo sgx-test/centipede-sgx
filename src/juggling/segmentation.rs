@@ -218,7 +218,7 @@ impl Msegmentation {
                     flag = false;
                     FE::zero()
                 } else {
-                    vec_secret[i].unwrap()
+                    vec_secret[i].as_ref().unwrap().clone()
                 }
             })
             .collect::<Vec<FE>>();
