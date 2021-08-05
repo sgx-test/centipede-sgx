@@ -16,8 +16,9 @@ rayon = "1.0.3"
 curv = { git = "https://github.com/sgx-test/curv-sgx", branch = "0.7.0-sgx-struct", version = "0.7", default-features = false, features = ["num-bigint"] }
 
 [dependencies.bulletproof]
-git = "https://github.com/KZen-networks/bulletproofs"
-tag = "v1.1.6"
+git = "https://github.com/sgx-test/bulletproofs-sgx"
+branch = "1.1.6-sgx-struct"
+#tag = "v1.1.6"
 default-features = false
 
 [dev-dependencies]
