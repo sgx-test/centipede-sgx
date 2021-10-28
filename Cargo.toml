@@ -18,7 +18,7 @@ sgx_tstd = { rev = "v1.1.3", git = "https://github.com/apache/teaclave-sgx-sdk.g
 
 [dependencies.bulletproof]
 git = "https://github.com/sgx-test/bulletproofs-sgx"
-branch = "1.1.6-sgx"
+branch = "1.1.6-sgx-sgx-gmp"
 #default-features = false
 
 #[dev-dependencies]
