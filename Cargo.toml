@@ -13,7 +13,7 @@ crate-type = ["lib"]
 serde_derive = { version = "1.0", git = "https://github.com/mesalock-linux/serde-sgx" }
 serde = { version = "1.0", git = "https://github.com/mesalock-linux/serde-sgx", features = ["derive"] }
 #rayon = "1.0.3"
-curv = { git = "https://github.com/sgx-test/curv-sgx", branch = "0.7.0-nosecp", version = "0.7", features = ["num-bigint"] }
+curv = {  git = "https://github.com/sgx-test/curv-sgx", version = "0.7", branch = "0.7.0-nosecp-sgx-gmp", features = ["rust-gmp"] }
 sgx_tstd = { rev = "v1.1.3", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
 [dependencies.bulletproof]
@@ -25,7 +25,7 @@ branch = "1.1.6-sgx"
 #criterion = "0.2"
 
 [features]
-default = ["curv/num-bigint","mesalock_sgx"]
+default = ["curv/rust-gmp","mesalock_sgx"]
 mesalock_sgx = ["sgx_tstd"]
 
 [[bench]]
