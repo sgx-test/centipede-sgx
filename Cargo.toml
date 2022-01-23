@@ -13,7 +13,7 @@ crate-type = ["lib"]
 serde_derive = "1.0"
 serde = "1.0"
 rayon = "1.0.3"
-curv = { git = "https://github.com/sgx-test/curv-sgx", branch = "0.7.0-sgx-struct", version = "0.7", default-features = false, features = ["num-bigint"] }
+curv = { git = "https://github.com/sgx-test/curv-sgx", branch = "0.7.0-sgx-struct", version = "0.7", default-features = false }
 
 [dependencies.bulletproof]
 git = "https://github.com/sgx-test/bulletproofs-sgx"
@@ -25,7 +25,7 @@ default-features = false
 criterion = "0.2"
 
 [features]
-default = ["curv/num-bigint"]
+default = ["curv/rust-gmp-kzen"]
 
 [[bench]]
 name = "v_backup"
