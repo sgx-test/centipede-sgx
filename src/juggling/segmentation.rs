@@ -24,7 +24,10 @@ use curv::elliptic::curves::secp256_k1::{FE, GE};
 use curv::elliptic::curves::traits::*;
 use curv::BigInt;
 use juggling::proof_system::{Helgamal, Helgamalsegmented, Witness};
-use rayon::prelude::*;
+#[cfg(not(feature = "wasm"))]
+use rayon::iter::IntoParallelIterator;
+#[cfg(not(feature = "wasm"))]
+use rayon::iter::ParallelIterator;
 
 use Errors::{self, ErrorDecrypting};
 
@@ -122,8 +125,11 @@ impl Msegmentation {
         let r_vec = (0..num_of_segments)
             .map(|_| ECScalar::new_random())
             .collect::<Vec<FE>>();
-        let segmented_enc = (0..num_of_segments)
-            .into_par_iter()
+        #[cfg(not(feature = "wasm"))]
+        let iter = (0..num_of_segments).into_par_iter();
+        #[cfg(feature = "wasm")]
+        let iter = (0..num_of_segments).into_iter();
+        let segmented_enc = iter
             .map(|i| {
                 //  let segment_i = mSegmentation::get_segment_k(secret,segment_size,i as u8);
                 Msegmentation::encrypt_segment_k(
@@ -188,15 +194,21 @@ impl Msegmentation {
         segment_size: &usize,
     ) -> Result<FE, Errors> {
         let limit = 2u32.pow(segment_size.clone() as u32);
-        let test_ge_table = (1..limit)
-            .into_par_iter()
+        #[cfg(not(feature = "wasm"))]
+        let iter = (1..limit).into_par_iter();
+        #[cfg(feature = "wasm")]
+        let iter = (1..limit).into_iter();
+        let test_ge_table = iter
             .map(|i| {
                 let test_fe = ECScalar::from(&BigInt::from(i));
                 G * &test_fe
             })
             .collect::<Vec<GE>>();
-        let vec_secret = (0..DE_vec.DE.len())
-            .into_par_iter()
+        #[cfg(not(feature = "wasm"))]
+        let iter = (0..DE_vec.DE.len()).into_par_iter();
+        #[cfg(feature = "wasm")]
+        let iter = (0..DE_vec.DE.len()).into_iter();
+        let vec_secret = iter
             .map(|i| {
                 let result = Msegmentation::decrypt_segment(
                     &DE_vec.DE[i],

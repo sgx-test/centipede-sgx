@@ -26,6 +26,8 @@ criterion = "0.2"
 
 [features]
 default = ["curv/rust-gmp-kzen"]
+wasm = []
+
 
 [[bench]]
 name = "v_backup"

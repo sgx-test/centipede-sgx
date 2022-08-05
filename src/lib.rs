@@ -19,6 +19,7 @@ pub mod juggling;
 pub mod wallet;
 extern crate bulletproof;
 extern crate curv;
+#[cfg(not(feature = "wasm"))]
 extern crate rayon;
 
 #[macro_use]
