@@ -24,9 +24,9 @@ use curv::elliptic::curves::secp256_k1::{FE, GE};
 use curv::elliptic::curves::traits::*;
 use curv::BigInt;
 use juggling::proof_system::{Helgamal, Helgamalsegmented, Witness};
-#[cfg(not(feature = "wasm"))]
+#[cfg(feature = "parallel")]
 use rayon::iter::IntoParallelIterator;
-#[cfg(not(feature = "wasm"))]
+#[cfg(feature = "parallel")]
 use rayon::iter::ParallelIterator;
 
 use Errors::{self, ErrorDecrypting};
@@ -125,9 +125,9 @@ impl Msegmentation {
         let r_vec = (0..num_of_segments)
             .map(|_| ECScalar::new_random())
             .collect::<Vec<FE>>();
-        #[cfg(not(feature = "wasm"))]
+        #[cfg(feature = "parallel")]
         let iter = (0..num_of_segments).into_par_iter();
-        #[cfg(feature = "wasm")]
+        #[cfg(not(feature = "parallel"))]
         let iter = (0..num_of_segments).into_iter();
         let segmented_enc = iter
             .map(|i| {
@@ -194,9 +194,9 @@ impl Msegmentation {
         segment_size: &usize,
     ) -> Result<FE, Errors> {
         let limit = 2u32.pow(segment_size.clone() as u32);
-        #[cfg(not(feature = "wasm"))]
+        #[cfg(feature = "parallel")]
         let iter = (1..limit).into_par_iter();
-        #[cfg(feature = "wasm")]
+        #[cfg(not(feature = "parallel"))]
         let iter = (1..limit).into_iter();
         let test_ge_table = iter
             .map(|i| {
@@ -204,9 +204,9 @@ impl Msegmentation {
                 G * &test_fe
             })
             .collect::<Vec<GE>>();
-        #[cfg(not(feature = "wasm"))]
+        #[cfg(feature = "parallel")]
         let iter = (0..DE_vec.DE.len()).into_par_iter();
-        #[cfg(feature = "wasm")]
+        #[cfg(not(feature = "parallel"))]
         let iter = (0..DE_vec.DE.len()).into_iter();
         let vec_secret = iter
             .map(|i| {
