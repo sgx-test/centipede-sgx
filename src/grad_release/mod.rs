@@ -1,59 +1,73 @@
 #![allow(non_snake_case)]
 
+use std::ops::{Add, Mul};
 use bulletproof::proofs::range_proof::RangeProof;
 use curv::cryptographic_primitives::proofs::sigma_correct_homomorphic_elgamal_enc::HomoELGamalProof;
 use curv::cryptographic_primitives::proofs::sigma_correct_homomorphic_elgamal_encryption_of_dlog::HomoELGamalDlogProof;
-use curv::elliptic::curves::traits::ECPoint;
+use curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use juggling::proof_system::Helgamal;
 use juggling::proof_system::Helgamalsegmented;
 use juggling::proof_system::Proof;
 use juggling::proof_system::Witness;
 use juggling::segmentation::Msegmentation;
+use serde::{Serialize, Deserialize};
+use zeroize::Zeroize;
 use Errors;
 use Errors::ErrorSegmentNum;
-type GE = curv::elliptic::curves::secp256_k1::GE;
-type FE = curv::elliptic::curves::secp256_k1::FE;
 
 const SECRET_BIT_LENGTH: usize = 256;
 
 #[derive(Serialize, Deserialize)]
-pub struct VEShare {
-    pub secret: FE,
-    pub segments: Witness,
-    pub encryptions: Helgamalsegmented,
-    pub proof: Proof,
+#[serde(bound(serialize = "GE: Serialize, GE::Scalar: Serialize"))]
+#[serde(bound(deserialize = "GE: Deserialize<'de>, GE::Scalar: Deserialize<'de>"))]
+pub struct VEShare<GE: ECPoint> {
+    pub secret: GE::Scalar,
+    pub segments: Witness<GE::Scalar>,
+    pub encryptions: Helgamalsegmented<GE>,
+    pub proof: Proof<GE>,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct FirstMessage {
+#[serde(bound(serialize = "GE: Serialize, GE::Scalar: Serialize"))]
+#[serde(bound(deserialize = "GE: Deserialize<'de>, GE::Scalar: Deserialize<'de>"))]
+pub struct FirstMessage<GE: ECPoint> {
     pub segment_size: usize,
     pub D_vec: Vec<GE>,
-    pub range_proof: RangeProof,
+    pub range_proof: RangeProof<GE>,
     pub Q: GE,
     pub E: GE,
-    pub dlog_proof: HomoELGamalDlogProof<curv::elliptic::curves::secp256_k1::GE>,
+    pub dlog_proof: HomoELGamalDlogProof<GE>,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct SegmentProof {
+#[serde(bound(serialize = "GE: Serialize, GE::Scalar: Serialize"))]
+#[serde(bound(deserialize = "GE: Deserialize<'de>, GE::Scalar: Deserialize<'de>"))]
+pub struct SegmentProof<GE: ECPoint> {
     pub k: usize,
     pub E_k: GE,
-    pub correct_enc_proof: HomoELGamalProof<curv::elliptic::curves::secp256_k1::GE>,
+    pub correct_enc_proof: HomoELGamalProof<GE>,
 }
 
-impl VEShare {
-    pub fn create(secret: &FE, encryption_key: &GE, segment_size: &usize) -> (FirstMessage, Self) {
+impl<GE> VEShare<GE>
+where
+    GE: ECPoint + Clone + Copy + Zeroize + Sync + Send
+    + for<'a> Mul<&'a GE::Scalar, Output=GE> + for <'a> Add<&'a GE, Output=GE>,
+    for<'a> &'a GE: Mul<&'a GE::Scalar, Output=GE>,
+    GE::Scalar: ECScalar + Copy + Zeroize + Sync + Send + PartialEq
+    + for<'a> Mul<&'a GE::Scalar, Output=GE::Scalar> + for<'a> Add<&'a GE::Scalar, Output=GE::Scalar>,
+{
+    pub fn create(secret: &GE::Scalar, encryption_key: &GE, segment_size: &usize) -> (FirstMessage<GE>, Self) {
         let G: GE = GE::generator();
 
         let num_segments = SECRET_BIT_LENGTH / *segment_size; //TODO: asserty divisible or add segment
-        let (segments, encryptions) = Msegmentation::to_encrypted_segments(
+        let (segments, encryptions) = Msegmentation::<GE>::to_encrypted_segments(
             secret,
             &segment_size,
             num_segments,
             &encryption_key,
             &G,
         );
-        let proof = Proof::prove(&segments, &encryptions, &G, &encryption_key, &segment_size);
+        let proof = Proof::<GE>::prove(&segments, &encryptions, &G, &encryption_key, &segment_size);
 
         // first message:
         let Q = GE::generator() * secret;
@@ -63,7 +77,7 @@ impl VEShare {
         let E_vec: Vec<GE> = (0..num_segments)
             .map(|i| encryptions.DE[i].E.clone())
             .collect();
-        let E = Msegmentation::assemble_ge(&E_vec, segment_size);
+        let E = Msegmentation::<GE>::assemble_ge(&E_vec, segment_size);
 
         // TODO: zeroize
 
@@ -85,7 +99,7 @@ impl VEShare {
         )
     }
 
-    pub fn segment_k_proof(&self, segment_k: &usize) -> SegmentProof {
+    pub fn segment_k_proof(&self, segment_k: &usize) -> SegmentProof<GE> {
         SegmentProof {
             k: segment_k.clone(),
             E_k: self.encryptions.DE[*segment_k].E,
@@ -93,23 +107,23 @@ impl VEShare {
         }
     }
 
-    pub fn start_verify(first_message: &FirstMessage, encryption_key: &GE) -> Result<(), Errors> {
+    pub fn start_verify(first_message: &FirstMessage<GE>, encryption_key: &GE) -> Result<(), Errors> {
         Proof::verify_first_message(first_message, encryption_key)
     }
 
     pub fn verify_segment(
-        first_message: &FirstMessage,
-        segment: &SegmentProof,
+        first_message: &FirstMessage<GE>,
+        segment: &SegmentProof<GE>,
         encryption_key: &GE,
     ) -> Result<(), Errors> {
         Proof::verify_segment(first_message, segment, encryption_key)
     }
 
     pub fn extract_secret(
-        first_message: &FirstMessage,
-        segment_proof_vec: &[SegmentProof],
-        decryption_key: &FE,
-    ) -> Result<FE, Errors> {
+        first_message: &FirstMessage<GE>,
+        segment_proof_vec: &[SegmentProof<GE>],
+        decryption_key: &GE::Scalar,
+    ) -> Result<GE::Scalar, Errors> {
         let len = segment_proof_vec.len();
         if len != first_message.D_vec.len() {
             return Err(ErrorSegmentNum);
@@ -119,12 +133,12 @@ impl VEShare {
                 D: first_message.D_vec[i],
                 E: segment_proof_vec[i].E_k,
             })
-            .collect::<Vec<Helgamal>>();
+            .collect::<Vec<Helgamal<GE>>>();
         let encryptions = Helgamalsegmented {
             DE: elgamal_enc_vec,
         };
 
-        let secret_decrypted = Msegmentation::decrypt(
+        let secret_decrypted = Msegmentation::<GE>::decrypt(
             &encryptions,
             &GE::generator(),
             &decryption_key,
@@ -137,6 +151,7 @@ impl VEShare {
 #[cfg(test)]
 mod tests {
     type GE = curv::elliptic::curves::secp256_k1::GE;
+    type FE = curv::elliptic::curves::secp256_k1::FE;
 
     use curv::elliptic::curves::traits::*;
     use grad_release::VEShare;
@@ -147,13 +162,13 @@ mod tests {
     fn test_secret_exchange() {
         let segment_size = 8;
         // secret generation
-        let secret_p1 = ECScalar::new_random();
-        let secret_p2 = ECScalar::new_random();
+        let secret_p1: FE = ECScalar::new_random();
+        let secret_p2: FE = ECScalar::new_random();
 
         // enc/dec key pairs generation
-        let p1_dec_key = ECScalar::new_random();
+        let p1_dec_key: FE = ECScalar::new_random();
         let p1_enc_key = GE::generator() * p1_dec_key;
-        let p2_dec_key = ECScalar::new_random();
+        let p2_dec_key: FE = ECScalar::new_random();
         let p2_enc_key = GE::generator() * p2_dec_key;
 
         // p1 sends first message to p2

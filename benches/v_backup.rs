@@ -22,13 +22,13 @@ mod bench {
             let y: FE = ECScalar::new_random();
             let G: GE = ECPoint::generator();
             let Y = G.clone() * &y;
-            let x = SecretShare::generate();
+            let x = SecretShare::<GE>::generate();
             let Q = G.clone() * &x.secret;
             b.iter(|| {
                 let (segments, encryptions) =
-                    Msegmentation::to_encrypted_segments(&x.secret, &segment_size, 32, &Y, &G);
+                    Msegmentation::<GE>::to_encrypted_segments(&x.secret, &segment_size, 32, &Y, &G);
                 let proof = Proof::prove(&segments, &encryptions, &G, &Y, &segment_size);
-                let _secret_decrypted = Msegmentation::decrypt(&encryptions, &G, &y, &segment_size);
+                let _secret_decrypted = Msegmentation::<GE>::decrypt(&encryptions, &G, &y, &segment_size);
                 let result = proof.verify(&encryptions, &G, &Y, &Q, &segment_size);
                 assert!(result.is_ok());
             })
@@ -41,11 +41,11 @@ mod bench {
             let y: FE = ECScalar::new_random();
             let G: GE = ECPoint::generator();
             let Y = G.clone() * &y;
-            let x = SecretShare::generate();
+            let x = SecretShare::<GE>::generate();
 
             b.iter(|| {
                 let (segments, encryptions) =
-                    Msegmentation::to_encrypted_segments(&x.secret, &segment_size, 32, &Y, &G);
+                    Msegmentation::<GE>::to_encrypted_segments(&x.secret, &segment_size, 32, &Y, &G);
                 let _proof = Proof::prove(&segments, &encryptions, &G, &Y, &segment_size);
             })
         });
@@ -57,14 +57,14 @@ mod bench {
             let y: FE = ECScalar::new_random();
             let G: GE = ECPoint::generator();
             let Y = G.clone() * &y;
-            let x = SecretShare::generate();
+            let x = SecretShare::<GE>::generate();
             let Q = G.clone() * &x.secret;
 
             let (segments, encryptions) =
-                Msegmentation::to_encrypted_segments(&x.secret, &segment_size, 32, &Y, &G);
+                Msegmentation::<GE>::to_encrypted_segments(&x.secret, &segment_size, 32, &Y, &G);
             let proof = Proof::prove(&segments, &encryptions, &G, &Y, &segment_size);
             b.iter(|| {
-                let _secret_decrypted = Msegmentation::decrypt(&encryptions, &G, &y, &segment_size);
+                let _secret_decrypted = Msegmentation::<GE>::decrypt(&encryptions, &G, &y, &segment_size);
                 let result = proof.verify(&encryptions, &G, &Y, &Q, &segment_size);
                 assert!(result.is_ok());
             })
