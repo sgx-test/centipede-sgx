@@ -18,8 +18,6 @@ use Errors::ErrorSegmentNum;
 const SECRET_BIT_LENGTH: usize = 256;
 
 #[derive(Serialize, Deserialize)]
-#[serde(bound(serialize = "GE: Serialize, GE::Scalar: Serialize"))]
-#[serde(bound(deserialize = "GE: Deserialize<'de>, GE::Scalar: Deserialize<'de>"))]
 pub struct VEShare<GE: ECPoint> {
     pub secret: GE::Scalar,
     pub segments: Witness<GE::Scalar>,

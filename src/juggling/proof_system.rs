@@ -33,23 +33,17 @@ use serde::{Serialize, Deserialize};
 use zeroize::Zeroize;
 
 #[derive(Serialize, Deserialize)]
-#[serde(bound(serialize = "GE: Serialize"))]
-#[serde(bound(deserialize = "GE: Deserialize<'de>"))]
 pub struct Helgamal<GE> {
     pub D: GE,
     pub E: GE,
 }
 
 #[derive(Serialize, Deserialize)]
-#[serde(bound(serialize = "GE: Serialize"))]
-#[serde(bound(deserialize = "GE: Deserialize<'de>"))]
 pub struct Helgamalsegmented<GE> {
     pub DE: Vec<Helgamal<GE>>,
 }
 
 #[derive(Serialize, Deserialize)]
-#[serde(bound(serialize = "FE: Serialize"))]
-#[serde(bound(deserialize = "FE: Deserialize<'de>"))]
 pub struct Witness<FE> {
     pub x_vec: Vec<FE>,
     pub r_vec: Vec<FE>,
